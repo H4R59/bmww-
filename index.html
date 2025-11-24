@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BMW M | UNLEASHED V4</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- GSAP & Plugins -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <!-- Aggressive Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Syncopate:wght@400;700&family=Exo+2:wght@300;600;900&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --neon-blue: #00e5ff;
+            --neon-purple: #2400ff;
+            --neon-red: #ff0015;
+            --void-black: #050505;
+        }
+
+        html, body {
+            background-color: var(--void-black);
+            color: #ffffff;
+            font-family: 'Exo 2', sans-serif;
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        /* Cinematic Noise Overlay */
+        .noise-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 9998;
+            opacity: 0.07;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        /* Typography */
+        h1, h2, .font-sync { font-family: 'Syncopate', sans-serif; text-transform: uppercase; }
+        .font-russo { font-family: 'Russo One', sans-serif; text-transform: uppercase; }
+
+        /* --- THE GATEKEEPER --- */
+        #gatekeeper {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #000;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .start-btn-container {
+            position: relative;
+            width: 220px;
+            height: 220px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .pulse-ring {
+            position: absolute;
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            border: 2px solid var(--neon-red);
+            animation: ringPulse 2s infinite;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .pulse-ring:nth-child(2) { animation-delay: 0.5s; }
+        .pulse-ring:nth-child(3) { animation-delay: 1s; }
+
+        @keyframes ringPulse {
+            0% { transform: scale(0.5); opacity: 1; border-width: 4px; }
+            100% { transform: scale(1.8); opacity: 0; border-width: 0px; }
+        }
+
+        .start-btn {
+            width: 140px; height: 140px;
+            background: radial-gradient(circle at 30% 30%, #2a0000, #000);
+            border: 3px solid var(--neon-red);
+            border-radius: 50%;
+            color: var(--neon-red);
+            font-family: 'Russo One';
+            font-size: 1.2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 10;
+            box-shadow: 0 0 40px rgba(255, 0, 21, 0.4);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-shadow: 0 0 10px var(--neon-red);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .start-btn:active { transform: scale(0.95); }
+
+        /* RPM Bar inside button */
+        .rpm-bar {
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 100%; height: 0%;
+            background: var(--neon-red);
+            opacity: 0.5;
+            transition: height 0.1s linear;
+        }
+
+        /* --- 3D CARDS --- */
+        .tilt-card {
+            transform-style: preserve-3d;
+            transform: perspective(1000px);
+            margin-bottom: 2rem;
+        }
+        
+        .card-inner {
+            background: linear-gradient(180deg, rgba(20,20,20,0.9) 0%, rgba(5,5,5,1) 100%);
+            border: 1px solid #333;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-inner::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.05), transparent);
+            transform: rotate(45deg);
+            animation: shine 6s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+
+        .card-inner:hover, .card-inner:active {
+            border-color: var(--neon-red);
+            box-shadow: 0 10px 40px rgba(255, 0, 21, 0.15);
+        }
+
+        /* --- MOBILE MENU OVERLAY --- */
+        #mobile-menu {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.98);
+            z-index: 9990; /* Below gatekeeper, above nav */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        #mobile-menu.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* --- UTILS --- */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+        #smoke-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1; pointer-events: none; mix-blend-mode: screen;
+        }
+
+        /* Credit Scanner Effect */
+        .scan-line {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 2px;
+            box-shadow: 0 0 10px currentColor;
+            opacity: 0;
+        }
+        
+        .credit-card:hover .scan-line {
+            animation: scan 1.5s ease-in-out infinite;
+            opacity: 1;
+        }
+
+        @keyframes scan {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+
+        /* Glitch Text Base */
+        .glitch-text { position: relative; }
+        .glitch-text::before, .glitch-text::after {
+            content: attr(data-text);
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--void-black);
+        }
+        
+        .glitch-text:hover::before {
+            left: 2px; text-shadow: -1px 0 #ff00c1; clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 0.5s infinite linear alternate-reverse;
+        }
+        .glitch-text:hover::after {
+            left: -2px; text-shadow: -1px 0 #00fff9; clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim2 0.5s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(12px, 9999px, 32px, 0); }
+            20% { clip: rect(65px, 9999px, 86px, 0); }
+            40% { clip: rect(12px, 9999px, 19px, 0); }
+            60% { clip: rect(89px, 9999px, 3px, 0); }
+            80% { clip: rect(43px, 9999px, 12px, 0); }
+            100% { clip: rect(2px, 9999px, 88px, 0); }
+        }
+        @keyframes glitch-anim2 {
+            0% { clip: rect(82px, 9999px, 12px, 0); }
+            20% { clip: rect(12px, 9999px, 64px, 0); }
+            40% { clip: rect(45px, 9999px, 2px, 0); }
+            60% { clip: rect(3px, 9999px, 23px, 0); }
+            80% { clip: rect(66px, 9999px, 9px, 0); }
+            100% { clip: rect(10px, 9999px, 92px, 0); }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- NOISE GRAIN -->
+    <div class="noise-overlay"></div>
+
+    <!-- 1. GATEKEEPER (Start Screen) -->
+    <div id="gatekeeper">
+        <div class="absolute top-10 w-full text-center opacity-50 px-4">
+            <h3 class="font-sync tracking-[6px] text-[10px] md:text-sm text-gray-400">SYSTEM LOCKED // AUTHORIZATION REQUIRED</h3>
+        </div>
+        
+        <div class="start-btn-container" onclick="igniteSystem()">
+            <div class="pulse-ring"></div>
+            <div class="pulse-ring"></div>
+            <button class="start-btn" id="ignition-btn">
+                <div class="rpm-bar"></div>
+                <span class="relative z-10 text-xl md:text-2xl">START</span>
+                <span class="relative z-10 text-[10px] tracking-widest mt-1 text-white">ENGINE</span>
+            </button>
+        </div>
+
+        <div class="absolute bottom-16 text-center w-full px-6">
+            <p class="text-gray-600 font-mono text-[10px] mb-4 tracking-widest">AUDIO VISUAL EXPERIENCE</p>
+            <div class="flex gap-2 justify-center opacity-50">
+                <div class="w-12 h-1 bg-[#00e5ff]"></div>
+                <div class="w-12 h-1 bg-[#2400ff]"></div>
+                <div class="w-12 h-1 bg-[#ff0015]"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. MOBILE MENU OVERLAY -->
+    <div id="mobile-menu">
+        <div class="flex flex-col gap-8 text-center">
+            <a href="#" onclick="toggleMenu(); scrollToSection('#showroom')" class="font-russo text-4xl text-white hover:text-[#ff0015] transition-colors">BEASTS</a>
+            <a href="#" onclick="toggleMenu(); scrollToSection('#credits')" class="font-russo text-4xl text-white hover:text-[#00e5ff] transition-colors">ARCHITECTS</a>
+            <button onclick="toggleMenu()" class="text-gray-500 font-mono text-sm mt-8">[ CLOSE SYSTEM ]</button>
+        </div>
+    </div>
+
+    <!-- 3. MAIN INTERFACE -->
+    <main id="main-interface" class="opacity-0 invisible h-0 overflow-hidden">
+        
+        <canvas id="smoke-canvas"></canvas>
+
+        <!-- Navbar -->
+        <nav class="fixed top-0 w-full z-50 px-6 py-5 flex justify-between items-center bg-gradient-to-b from-black/90 to-transparent backdrop-blur-sm">
+            <div class="flex items-center gap-4 select-none group cursor-pointer">
+                <!-- BMW LOGO WITH ROTATION -->
+                <div class="relative w-10 h-10 md:w-12 md:h-12 transition-transform duration-700 group-hover:rotate-180">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/f/f4/BMW_logo_%28gray%29.svg" 
+                         class="w-full h-full object-contain filter drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" alt="BMW Logo">
+                </div>
+                <div class="text-2xl md:text-3xl font-black italic font-russo text-white tracking-tighter shadow-lg flex items-center">
+                    <span class="w-[2px] h-8 bg-gray-700 mx-2 transform rotate-12"></span>
+                    <span class="text-[#00e5ff]">/</span><span class="text-[#2400ff]">/</span><span class="text-[#ff0015]">/</span>M
+                </div>
+            </div>
+            
+            <!-- Desktop Links -->
+            <div class="hidden md:flex gap-10 font-sync text-xs font-bold tracking-[0.2em]">
+                <a href="#showroom" class="hover:text-[#ff0015] transition-colors">MODELS</a>
+                <a href="#credits" class="hover:text-[#00e5ff] transition-colors">ARCHITECTS</a>
+            </div>
+
+            <!-- Mobile Hamburger -->
+            <button onclick="toggleMenu()" class="md:hidden text-white text-2xl focus:outline-none">
+                <i class="fas fa-bars"></i>
+            </button>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="h-screen w-full relative flex flex-col items-center justify-center overflow-hidden">
+            <!-- Background Parallax -->
+            <div class="absolute inset-0 z-0">
+                <img id="hero-bg" src="https://images.unsplash.com/photo-1607853202273-797f1c22a38e?q=80&w=2727&auto=format&fit=crop" 
+                     class="w-full h-full object-cover opacity-50 scale-125 transform origin-center" alt="BMW M">
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20"></div>
+                <!-- Vignette -->
+                <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#000000_100%)]"></div>
+            </div>
+
+            <div class="relative z-10 text-center px-4 w-full max-w-4xl mx-auto mt-[-50px]">
+                <h2 class="text-[#ff0015] font-sync text-xs md:text-xl tracking-[0.8em] md:tracking-[1.5em] mb-4 animate-pulse">DO NOT OBEY</h2>
+                
+                <h1 class="glitch-text text-5xl md:text-9xl font-black italic font-russo mb-6 leading-[0.9] md:leading-none text-white drop-shadow-2xl" data-text="UNLEASHED">
+                    UNLEASHED
+                </h1>
+                
+                <p class="font-mono text-gray-300 text-xs md:text-base max-w-sm md:max-w-xl mx-auto border-l-2 border-[#ff0015] pl-4 text-left leading-relaxed shadow-black drop-shadow-md">
+                    Precision is not enough. You need chaos. You need power. Welcome to the dark side of engineering.
+                </p>
+            </div>
+            
+            <!-- Scroll Indicator -->
+            <div class="absolute bottom-8 flex flex-col items-center gap-2 animate-bounce z-20">
+                <span class="text-[8px] md:text-[10px] font-sync tracking-widest text-gray-400">SCROLL TO DRIVE</span>
+                <i class="fas fa-chevron-down text-[#ff0015]"></i>
+            </div>
+        </section>
+
+        <!-- Showroom Section -->
+        <section id="showroom" class="py-20 px-6 md:px-12 relative z-10 w-full max-w-7xl mx-auto">
+            <div class="flex flex-col items-center mb-16">
+                <h2 class="text-4xl md:text-7xl font-russo text-center">THE <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#00e5ff] to-[#ff0015]">LINEUP</span></h2>
+                <div class="w-24 h-1 bg-gradient-to-r from-[#00e5ff] via-[#2400ff] to-[#ff0015] mt-4"></div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-6">
+                
+                <!-- M4 CSL -->
+                <div class="tilt-card group">
+                    <div class="card-inner p-6 rounded-sm relative h-[450px] md:h-[500px] flex flex-col justify-end">
+                        <img src="https://images.unsplash.com/photo-1617788138017-80ad40651399?q=80&w=2670&auto=format&fit=crop" 
+                             class="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" alt="M4">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
+                        
+                        <div class="relative z-10 translate-y-2 md:translate-y-4 group-hover:translate-y-0 transition-transform">
+                            <h3 class="text-3xl md:text-4xl font-russo italic text-white drop-shadow-lg">M4 <span class="text-[#ff0015] text-lg not-italic font-sync">CSL</span></h3>
+                            <div class="flex gap-3 mt-4 font-mono text-[10px] md:text-xs text-gray-300">
+                                <div class="bg-black/80 px-3 py-2 border border-gray-700 backdrop-blur">543 HP</div>
+                                <div class="bg-black/80 px-3 py-2 border border-gray-700 backdrop-blur">3.6 SEC</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- M3 Touring -->
+                <div class="tilt-card group md:mt-24">
+                    <div class="card-inner p-6 rounded-sm relative h-[450px] md:h-[500px] flex flex-col justify-end">
+                        <img src="https://images.unsplash.com/photo-1603577319985-797305962e24?q=80&w=2670&auto=format&fit=crop" 
+                             class="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" alt="M3">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
+                        
+                        <div class="relative z-10 translate-y-2 md:translate-y-4 group-hover:translate-y-0 transition-transform">
+                            <h3 class="text-3xl md:text-4xl font-russo italic text-white drop-shadow-lg">M3 <span class="text-[#00e5ff] text-lg not-italic font-sync">TOURING</span></h3>
+                            <div class="flex gap-3 mt-4 font-mono text-[10px] md:text-xs text-gray-300">
+                                <div class="bg-black/80 px-3 py-2 border border-gray-700 backdrop-blur">503 HP</div>
+                                <div class="bg-black/80 px-3 py-2 border border-gray-700 backdrop-blur">AWD</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- XM -->
+                <div class="tilt-card group">
+                    <div class="card-inner p-6 rounded-sm relative h-[450px] md:h-[500px] flex flex-col justify-end">
+                        <img src="https://images.unsplash.com/photo-1678808124298-5002a249053c?q=80&w=2670&auto=format&fit=crop" 
+                             class="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" alt="XM">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
+                        
+                        <div class="relative z-10 translate-y-2 md:translate-y-4 group-hover:translate-y-0 transition-transform">
+                            <h3 class="text-3xl md:text-4xl font-russo italic text-white drop-shadow-lg">XM <span class="text-[#2400ff] text-lg not-italic font-sync">HYBRID</span></h3>
+                            <div class="flex gap-3 mt-4 font-mono text-[10px] md:text-xs text-gray-300">
+                                <div class="bg-black/80 px-3 py-2 border border-gray-700 backdrop-blur">738 HP</div>
+                                <div class="bg-black/80 px-3 py-2 border border-gray-700 backdrop-blur">V8 + ELEC</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- NEW CREDITS SECTION -->
+        <section id="credits" class="py-24 bg-black relative border-t border-[#111] overflow-hidden">
+            <!-- Background Detail -->
+            <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#333 1px, transparent 1px); background-size: 30px 30px;"></div>
+            
+            <div class="container mx-auto text-center relative z-10 px-4">
+                <div class="inline-block mb-16">
+                    <h2 class="font-russo text-4xl md:text-6xl text-white relative z-10">THE <span class="text-[#ff0015]">ARCHITECTS</span></h2>
+                    <div class="h-1 w-full bg-gradient-to-r from-transparent via-[#ff0015] to-transparent mt-2"></div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+                    
+                    <!-- Harsh Hoon: Developer -->
+                    <div class="credit-card group relative">
+                        <!-- Glow Backing -->
+                        <div class="absolute inset-0 bg-gradient-to-r from-[#00e5ff] to-[#2400ff] opacity-0 blur-xl group-hover:opacity-30 transition-opacity duration-500"></div>
+                        
+                        <!-- Card Content -->
+                        <div class="relative bg-[#080808] border border-[#222] p-8 md:p-12 h-full flex flex-col items-center justify-center overflow-hidden group-hover:border-[#00e5ff] transition-colors duration-300">
+                            <!-- Scanner Beam -->
+                            <div class="scan-line bg-[#00e5ff]"></div>
+                            
+                            <!-- Icon -->
+                            <div class="w-16 h-16 rounded-full border border-[#00e5ff] flex items-center justify-center mb-6 text-[#00e5ff] shadow-[0_0_20px_rgba(0,229,255,0.3)]">
+                                <i class="fas fa-code text-2xl"></i>
+                            </div>
+
+                            <p class="font-mono text-[#00e5ff] text-xs tracking-[0.4em] mb-4">CORE SYSTEM DEVELOPER</p>
+                            <h3 class="font-russo text-4xl md:text-5xl text-white mb-2 glitch-text" data-text="HARSH HOON">HARSH HOON</h3>
+                            
+                            <div class="flex gap-2 mt-6">
+                                <div class="w-2 h-2 bg-[#00e5ff] rounded-full animate-pulse"></div>
+                                <div class="w-2 h-2 bg-[#00e5ff] rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+                                <div class="w-2 h-2 bg-[#00e5ff] rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ashu Hoon: Architect -->
+                    <div class="credit-card group relative">
+                        <!-- Glow Backing -->
+                        <div class="absolute inset-0 bg-gradient-to-r from-[#ff0015] to-[#800000] opacity-0 blur-xl group-hover:opacity-30 transition-opacity duration-500"></div>
+                        
+                        <!-- Card Content -->
+                        <div class="relative bg-[#080808] border border-[#222] p-8 md:p-12 h-full flex flex-col items-center justify-center overflow-hidden group-hover:border-[#ff0015] transition-colors duration-300">
+                            <!-- Scanner Beam -->
+                            <div class="scan-line bg-[#ff0015]"></div>
+
+                            <!-- Icon -->
+                            <div class="w-16 h-16 rounded-full border border-[#ff0015] flex items-center justify-center mb-6 text-[#ff0015] shadow-[0_0_20px_rgba(255,0,21,0.3)]">
+                                <i class="fas fa-drafting-compass text-2xl"></i>
+                            </div>
+
+                            <p class="font-mono text-[#ff0015] text-xs tracking-[0.4em] mb-4">SYSTEM ARCHITECT</p>
+                            <h3 class="font-russo text-4xl md:text-5xl text-white mb-2 glitch-text" data-text="ASHU HOON">ASHU HOON</h3>
+
+                            <div class="flex gap-2 mt-6">
+                                <div class="w-2 h-2 bg-[#ff0015] rounded-full animate-pulse"></div>
+                                <div class="w-2 h-2 bg-[#ff0015] rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+                                <div class="w-2 h-2 bg-[#ff0015] rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <footer class="bg-black py-8 text-center border-t border-[#111]">
+            <div class="flex flex-col items-center justify-center gap-2">
+                <div class="flex items-center gap-2 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/f/f4/BMW_logo_%28gray%29.svg" class="h-6 md:h-8" alt="logo">
+                    <span class="font-bold text-white text-sm md:text-base">M POWER</span>
+                </div>
+                <p class="text-[10px] text-gray-700 mt-2">© 2023 BMW M. Concept by Harshh & Ashu.</p>
+            </div>
+        </footer>
+
+    </main>
+
+    <script>
+        // --- 1. OPTIMIZED SMOKE SYSTEM (Mobile & Desktop) ---
+        const canvas = document.getElementById('smoke-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        let particles = [];
+        const isMobile = window.innerWidth < 768;
+        const particleCount = isMobile ? 15 : 40; 
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Particle {
+            constructor() {
+                this.reset();
+                this.y = Math.random() * height; 
+            }
+
+            reset() {
+                this.x = Math.random() * width;
+                this.y = height + 50;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = Math.random() * -0.5 - 0.2; 
+                this.size = Math.random() * 80 + 40;
+                this.color = `rgba(${Math.random() > 0.5 ? '0, 229, 255' : '36, 0, 255'},`; 
+                this.alpha = 0;
+                this.life = Math.random() * 200 + 100;
+                this.maxAlpha = 0.05; 
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life--;
+                if (this.life > 50 && this.alpha < this.maxAlpha) this.alpha += 0.0005;
+                if (this.life < 50) this.alpha -= 0.0005;
+                if (this.life <= 0 || this.alpha <= 0) this.reset();
+            }
+
+            draw() {
+                ctx.save();
+                ctx.fillStyle = this.color + this.alpha + ')';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        for (let i = 0; i < particleCount; i++) particles.push(new Particle());
+
+        function animateSmoke() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateSmoke);
+        }
+        animateSmoke();
+
+
+        // --- 2. IGNITION & MENU LOGIC ---
+        function igniteSystem() {
+            const btn = document.getElementById('ignition-btn');
+            const bar = btn.querySelector('.rpm-bar');
+            const gate = document.getElementById('gatekeeper');
+            const main = document.getElementById('main-interface');
+            const heroBg = document.getElementById('hero-bg');
+
+            bar.style.height = "100%";
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            
+            gsap.to(btn, { scale: 1.1, duration: 0.2, yoyo: true, repeat: 5 });
+            gsap.to("body", { x: -5, duration: 0.05, repeat: 10, yoyo: true });
+
+            setTimeout(() => {
+                gsap.to(gate, {
+                    yPercent: -100,
+                    duration: 0.8,
+                    ease: "power4.inOut",
+                    onComplete: () => {
+                        gate.style.display = 'none';
+                        main.style.height = 'auto'; 
+                        main.style.overflow = 'visible';
+                        document.body.style.overflowY = 'auto';
+                    }
+                });
+
+                gsap.to(main, { opacity: 1, visibility: 'visible', duration: 0.5 });
+                
+                gsap.fromTo(heroBg, 
+                    { scale: 1.5, filter: "blur(10px)" },
+                    { scale: 1.1, filter: "blur(0px)", duration: 2, delay: 0.5, ease: "power2.out" }
+                );
+
+                gsap.from("#main-interface h1, #main-interface h2, #main-interface p", {
+                    y: 50,
+                    opacity: 0,
+                    duration: 1,
+                    stagger: 0.2,
+                    delay: 0.8,
+                    ease: "power3.out"
+                });
+
+            }, 800); 
+        }
+
+        // --- 3. MOBILE MENU TOGGLE ---
+        const menu = document.getElementById('mobile-menu');
+        let isMenuOpen = false;
+
+        function toggleMenu() {
+            isMenuOpen = !isMenuOpen;
+            if(isMenuOpen) {
+                menu.classList.add('active');
+                gsap.from("#mobile-menu a", { y: 20, opacity: 0, stagger: 0.1, duration: 0.4 });
+            } else {
+                menu.classList.remove('active');
+            }
+        }
+
+        function scrollToSection(id) {
+            const el = document.querySelector(id);
+            if(el) {
+                const offset = 80; 
+                const bodyRect = document.body.getBoundingClientRect().top;
+                const elementRect = el.getBoundingClientRect().top;
+                const elementPosition = elementRect - bodyRect;
+                const offsetPosition = elementPosition - offset;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: "smooth"
+                });
+            }
+        }
+
+        // --- 4. ANIMATIONS (Tilt & Scroll) ---
+        if (!isMobile) {
+            document.querySelectorAll('.tilt-card, .credit-card').forEach(card => {
+                card.addEventListener('mousemove', (e) => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    const rotateX = ((y - centerY) / centerY) * -5;
+                    const rotateY = ((x - centerX) / centerX) * 5;
+
+                    gsap.to(card, { rotationX: rotateX, rotationY: rotateY, duration: 0.4, ease: "power1.out" });
+                });
+                card.addEventListener('mouseleave', () => {
+                    gsap.to(card, { rotationX: 0, rotationY: 0, duration: 0.5 });
+                });
+            });
+        }
+
+        // Entry Animations
+        gsap.utils.toArray('.tilt-card').forEach((card, i) => {
+            gsap.from(card, {
+                scrollTrigger: {
+                    trigger: card,
+                    start: "top 90%",
+                },
+                y: 100,
+                opacity: 0,
+                duration: 0.8,
+                delay: i * 0.1,
+                ease: "power3.out"
+            });
+        });
+        
+        // Credits Animation
+        gsap.utils.toArray('.credit-card').forEach((card, i) => {
+            gsap.from(card, {
+                scrollTrigger: {
+                    trigger: "#credits",
+                    start: "top 70%",
+                },
+                x: i === 0 ? -100 : 100, // Slide in from sides
+                opacity: 0,
+                duration: 1,
+                ease: "power4.out"
+            });
+        });
+
+    </script>
+</body>
+</html>
